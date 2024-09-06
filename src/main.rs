@@ -5,32 +5,34 @@ enum Color {
     Blue,
     Black,
     Red,
-    Green
+    Green,
 }
 
 enum Rarity {
     Common,
     Uncommon,
     Rare,
-    Mythic
+    Mythic,
 }
 
 struct Card {
     name: String,
     cmc: u32,
     colors: Vec<scryfall::card::Color>,
-// change it back later
-//    colors: Option<Vec<String>>,
+    // TODO: change it back later
+    // colors: Option<Vec<String>>,
     rarity: Rarity,
     types: Vec<String>,
     subtypes: Vec<String>,
     set: String,
-    date: NaiveDate
+    date: NaiveDate,
 }
 
 impl From<scryfall::card::Card> for Card {
     fn from(value: scryfall::card::Card) -> Self {
-        let type_line = value.type_line.unwrap_or_else(||panic!("Search Error: Missing Type"));
+        let type_line = value
+            .type_line
+            .unwrap_or_else(|| panic!("Search Error: Missing Type"));
         let l: Vec<String> = type_line.split(" — ").map(|s| s.to_string()).collect();
         let types: Vec<String> = l[0].split(" ").map(|s| s.to_string()).collect();
         let subtypes: Vec<String> = match l.get(1) {
@@ -51,11 +53,82 @@ impl From<scryfall::card::Card> for Card {
             types,
             subtypes,
             set: value.set.to_string(),
-            date: value.released_at
+            date: value.released_at,
         }
     }
 }
 
-fn main() {
-
+#[derive(Debug)]
+enum Correctness {
+    Incorrect,
+    PartlyCorrect,
+    AlmostCorrect,
 }
+
+#[derive(Debug)]
+enum Direction {
+    Higher(Correctness),
+    Lower(Correctness),
+}
+
+#[derive(Debug)]
+struct Quantity {
+    correctness: Correctness,
+    value: u32,
+}
+
+#[derive(Debug, Default)]
+struct Feedback {
+    // TODO: Names
+    cmc: Option<Direction>,
+    colours: Option<Quantity>,
+    rarity: Option<Direction>,
+    types: Option<Quantity>,
+    subtypes: Option<Quantity>,
+    set: Option<Direction>,
+}
+
+trait Guesser {
+    fn next_guess(&self) -> String;
+    fn feedback(&self, feedback: Feedback);
+}
+
+struct CliGuesser {
+    stdin: std::io::Stdin,
+}
+
+impl Default for CliGuesser {
+    fn default() -> Self {
+        Self {
+            stdin: std::io::stdin(),
+        }
+    }
+}
+
+impl Guesser for CliGuesser {
+    fn next_guess(&self) -> String {
+        let mut line = String::new();
+        match self.stdin.read_line(&mut line) {
+            Ok(s) => s,
+            Err(e) => panic!("Error getting line from user: {e:?}"),
+        };
+        line
+    }
+
+    fn feedback(&self, feedback: Feedback) {
+        println!("{feedback:?}");
+    }
+}
+
+fn main() {
+    let guesser = CliGuesser::default();
+
+    let max_guesses = 20;
+    for guess_index in max_guesses..1 {
+        let guess = guesser.next_guess();
+        let feedback = Feedback::default();
+        // TODO: Calc diff
+        guesser.feedback(feedback);
+    }
+}
+
