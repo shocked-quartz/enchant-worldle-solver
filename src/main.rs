@@ -132,3 +132,7 @@ fn main() {
     }
 }
 
+// NOTE FOR MULTI FACE CARDS
+// MELDS and FLIPS and MDFCs only have characteristics of the front face.
+// SPLIT cards have all colors and types of both cards, and have names written as X // Y.
+// TRANSFORM cards have the colors of both faces, but only the types of the front. Name is written as X // Y.
