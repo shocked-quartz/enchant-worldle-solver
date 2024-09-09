@@ -88,6 +88,47 @@ struct Feedback {
     set: Option<Direction>,
 }
 
+trait Game {
+    fn start_game(&mut self);
+    fn feedback(self, card: Card) -> Feedback;
+}
+
+struct APIGame {
+    answer: Card,
+    rounds_left: u32,
+}
+
+impl APIGame {
+    fn calc_cmc(self, feedback: &mut Feedback, guess: Card) {
+        if guess.cmc == self.answer.cmc {
+            feedback.cmc = None;
+        }
+    
+        let mut correctness = Correctness::Incorrect;
+        if (self.answer.cmc as i32 - guess.cmc as i32).abs() <= 2 {
+            correctness = Correctness::AlmostCorrect;
+        }
+    
+        if self.answer.cmc < guess.cmc {
+            feedback.cmc = Some(Direction::Higher(correctness));
+        } else {
+            feedback.cmc = Some(Direction::Lower(correctness));
+        }
+    }
+}
+
+impl Game for APIGame {
+    fn start_game(&mut self) {
+        todo!()
+    }
+
+    fn feedback(self, card: Card) -> Feedback {
+        let mut response = Feedback::default();
+        self.calc_cmc(&mut response, card);
+        response
+    }
+}
+
 trait Guesser {
     fn next_guess(&self) -> String;
     fn feedback(&self, feedback: Feedback);
